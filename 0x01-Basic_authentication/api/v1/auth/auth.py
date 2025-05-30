@@ -28,18 +28,18 @@ class Auth:
         if excluded_paths is None or len(excluded_paths) == 0:
             return True
 
-        # Normalize path by ensuring it ends with /
+        # Normalize path by ensuring it ends with a slash
         normalized_path = path if path.endswith('/') else path + '/'
 
         for excluded_path in excluded_paths:
-            # Handle wildcard patterns
             if excluded_path.endswith('*'):
                 if normalized_path.startswith(excluded_path[:-1]):
                     return False
             else:
-                # Normalize excluded path
-                normalized_excluded = excluded_path
-                if excluded_path.endswith('/') else excluded_path + '/'
+                normalized_excluded = (
+                    excluded_path if excluded_path.endswith('/')
+                    else excluded_path + '/'
+                )
                 if normalized_path == normalized_excluded:
                     return False
 
