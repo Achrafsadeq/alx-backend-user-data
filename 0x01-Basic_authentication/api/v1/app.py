@@ -3,11 +3,9 @@
 Route module for the API
 """
 from os import getenv
-from api.v1.views import app_views
 from flask import Flask, jsonify, abort, request
-from flask_cors import (CORS, cross_origin)
-import os
-
+from flask_cors import CORS
+from api.v1.views import app_views
 
 app = Flask(__name__)
 app.register_blueprint(app_views)
@@ -28,35 +26,34 @@ elif auth_type == 'basic_auth':
 
 @app.errorhandler(404)
 def not_found(error) -> str:
-    """ Not found handler
-    """
+    """ Not found handler """
     return jsonify({"error": "Not found"}), 404
 
 
 @app.errorhandler(401)
 def unauthorized(error) -> str:
-    """ Unauthorized handler
-    """
+    """ Unauthorized handler """
     return jsonify({"error": "Unauthorized"}), 401
 
 
 @app.errorhandler(403)
 def forbidden(error) -> str:
-    """ Forbidden handler
-    """
+    """ Forbidden handler """
     return jsonify({"error": "Forbidden"}), 403
 
 
 @app.before_request
 def before_request():
-    """ Method to handle before_request filtering
-    """
+    """ Method to handle before_request filtering """
     if auth is None:
         return
 
     # List of paths that don't require authentication
-    excluded_paths =
-    ['/api/v1/status/', '/api/v1/unauthorized/', '/api/v1/forbidden/']
+    excluded_paths = [
+        '/api/v1/status/',
+        '/api/v1/unauthorized/',
+        '/api/v1/forbidden/'
+    ]
 
     # Check if authentication is required for this path
     if not auth.require_auth(request.path, excluded_paths):
