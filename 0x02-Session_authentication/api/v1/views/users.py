@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-""" Module of Users views
+"""Module of Users views
+Handles all RESTful API actions for User objects
 """
 from api.v1.views import app_views
 from flask import abort, jsonify, request
@@ -8,23 +9,56 @@ from models.user import User
 
 @app_views.route('/users', methods=['GET'], strict_slashes=False)
 def view_all_users() -> str:
-    """ GET /api/v1/users
-    Return:
-      - list of all User objects JSON represented
+    """GET /api/v1/users
+    Retrieves the list of all User objects
+    Requires Basic Authentication
+    Returns:
+        - JSON list of all User objects
+        - 401 if unauthorized
+        - 403 if forbidden
     """
+    from api.v1.auth import auth
+
+    if auth is None:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    auth_header = auth.authorization_header(request)
+    if auth_header is None:
+        abort(401)
+
+    current_user = auth.current_user(request)
+    if current_user is None:
+        abort(403)
+
     all_users = [user.to_json() for user in User.all()]
     return jsonify(all_users)
 
 
 @app_views.route('/users/<user_id>', methods=['GET'], strict_slashes=False)
 def view_one_user(user_id: str = None) -> str:
-    """ GET /api/v1/users/:id
-    Path parameter:
-      - User ID
-    Return:
-      - User object JSON represented
-      - 404 if the User ID doesn't exist
+    """GET /api/v1/users/<user_id>
+    Retrieves a specific User object
+    Args:
+        user_id: ID of the User to retrieve
+    Returns:
+        - JSON representation of the User
+        - 404 if User doesn't exist
+        - 401 if unauthorized
+        - 403 if forbidden
     """
+    from api.v1.auth import auth
+
+    if auth is None:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    auth_header = auth.authorization_header(request)
+    if auth_header is None:
+        abort(401)
+
+    current_user = auth.current_user(request)
+    if current_user is None:
+        abort(403)
+
     if user_id is None:
         abort(404)
     user = User.get(user_id)
@@ -33,15 +67,55 @@ def view_one_user(user_id: str = None) -> str:
     return jsonify(user.to_json())
 
 
+@app_views.route('/users/me', methods=['GET'], strict_slashes=False)
+def view_current_user() -> str:
+    """GET /api/v1/users/me
+    Retrieves the currently authenticated User
+    Returns:
+        - JSON representation of the current User
+        - 401 if unauthorized
+    """
+    from api.v1.auth import auth
+
+    if auth is None:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    auth_header = auth.authorization_header(request)
+    if auth_header is None:
+        abort(401)
+
+    current_user = auth.current_user(request)
+    if current_user is None:
+        abort(403)
+
+    return jsonify(current_user.to_json())
+
+
 @app_views.route('/users/<user_id>', methods=['DELETE'], strict_slashes=False)
 def delete_user(user_id: str = None) -> str:
-    """ DELETE /api/v1/users/:id
-    Path parameter:
-      - User ID
-    Return:
-      - empty JSON is the User has been correctly deleted
-      - 404 if the User ID doesn't exist
+    """DELETE /api/v1/users/<user_id>
+    Deletes a User object
+    Args:
+        user_id: ID of the User to delete
+    Returns:
+        - Empty JSON response
+        - 404 if User doesn't exist
+        - 401 if unauthorized
+        - 403 if forbidden
     """
+    from api.v1.auth import auth
+
+    if auth is None:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    auth_header = auth.authorization_header(request)
+    if auth_header is None:
+        abort(401)
+
+    current_user = auth.current_user(request)
+    if current_user is None:
+        abort(403)
+
     if user_id is None:
         abort(404)
     user = User.get(user_id)
@@ -53,15 +127,16 @@ def delete_user(user_id: str = None) -> str:
 
 @app_views.route('/users', methods=['POST'], strict_slashes=False)
 def create_user() -> str:
-    """ POST /api/v1/users/
-    JSON body:
-      - email
-      - password
-      - last_name (optional)
-      - first_name (optional)
-    Return:
-      - User object JSON represented
-      - 400 if can't create the new User
+    """POST /api/v1/users/
+    Creates a new User
+    JSON Body:
+        - email: user's email
+        - password: user's password
+        - first_name: optional first name
+        - last_name: optional last name
+    Returns:
+        - JSON representation of new User
+        - 400 if invalid input
     """
     rj = None
     error_msg = None
@@ -91,17 +166,33 @@ def create_user() -> str:
 
 @app_views.route('/users/<user_id>', methods=['PUT'], strict_slashes=False)
 def update_user(user_id: str = None) -> str:
-    """ PUT /api/v1/users/:id
-    Path parameter:
-      - User ID
-    JSON body:
-      - last_name (optional)
-      - first_name (optional)
-    Return:
-      - User object JSON represented
-      - 404 if the User ID doesn't exist
-      - 400 if can't update the User
+    """PUT /api/v1/users/<user_id>
+    Updates a User object
+    Args:
+        user_id: ID of the User to update
+    JSON Body:
+        - first_name: optional new first name
+        - last_name: optional new last name
+    Returns:
+        - JSON representation of updated User
+        - 404 if User doesn't exist
+        - 400 if invalid input
+        - 401 if unauthorized
+        - 403 if forbidden
     """
+    from api.v1.auth import auth
+
+    if auth is None:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    auth_header = auth.authorization_header(request)
+    if auth_header is None:
+        abort(401)
+
+    current_user = auth.current_user(request)
+    if current_user is None:
+        abort(403)
+
     if user_id is None:
         abort(404)
     user = User.get(user_id)
