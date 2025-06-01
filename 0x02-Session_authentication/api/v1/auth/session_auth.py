@@ -44,6 +44,8 @@ class SessionAuth(Auth):
             The User object if found, None otherwise
         """
         session_cookie = self.session_cookie(request)
+        if session_cookie is None:
+            return None
         user_id = self.user_id_for_session_id(session_cookie)
         return User.get(user_id)
 
